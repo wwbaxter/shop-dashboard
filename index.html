@@ -1,32 +1,110 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Shop Dashboard</title>
-	<styles>
-		body {
-			margin: 0;
-			background: #111827;
-			overflow: hidden;
-		}
-		img {
-			width: 100vw;
-			height: 100vh;
-			object-fit: contain;
-		}
-	</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop Project Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #101820;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    header {
+      height: 65px;
+      padding: 17px 28px;
+      background: #182938;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 22px;
+    }
+    #status { font-size: 14px; color: #9ed4ff; }
+    #viewport {
+      position: relative;
+      height: calc(100vh - 65px);
+      overflow: hidden;
+    }
+    #excel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2200px;
+      border: none;
+      background: white;
+      transition: transform 0.08s linear;
+    }
+  </style>
 </head>
 <body>
-	<img id="dashboard" src="dashboard.png" alt="Production Dashboard">
-	<script>
-		setInterval(() => {
-			const image = new Image();
-			image.onload = () => {
-				document.getElementById("dashboard").src = image.src;
-			};
-			image.src = "dashboard.png?t=" + Date.now();
-		}, 60000);
-	</script>
+  <header>
+    <strong>SHOP PROJECT DASHBOARD</strong>
+    <span id="status">Live display</span>
+  </header>
+
+  <div id="viewport">
+    <iframe id="excel" title="Excel dashboard"></iframe>
+  </div>
+
+  <script>
+    // Replace with the URL from Microsoft's embed code.
+    const EXCEL_URL = "http://infinityarch.sharepoint.com/sites/PMs/_layouts/15/Doc.aspx?sourcedoc={44733fdb-c900-4621-9d0b-64f060407159}&action=embedview&wdAllowInteractivity=False&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=True&wdInConfigurator=True&wdInConfigurator=True";
+
+    // Adjustable display settings
+    const SCROLL_SPEED = 25;       // pixels per second
+    const BOTTOM_PAUSE = 5000;     // milliseconds
+    const TOP_PAUSE = 5000;
+    const REFRESH_INTERVAL = 300000; // 5 minutes
+
+    const frame = document.getElementById("excel");
+    const viewport = document.getElementById("viewport");
+
+    frame.src = EXCEL_URL;
+
+    let offset = 0;
+    let direction = 1;
+    let pauseUntil = Date.now() + TOP_PAUSE;
+    let previous = performance.now();
+
+    function animate(now) {
+      const elapsed = Math.min((now - previous) / 1000, 0.1);
+      previous = now;
+
+      const maxOffset = Math.max(
+        0, frame.offsetHeight - viewport.clientHeight
+      );
+
+      if (Date.now() >= pauseUntil) {
+        offset += direction * SCROLL_SPEED * elapsed;
+
+        if (offset >= maxOffset) {
+          offset = maxOffset;
+          direction = -1;
+          pauseUntil = Date.now() + BOTTOM_PAUSE;
+        } else if (offset <= 0) {
+          offset = 0;
+          direction = 1;
+          pauseUntil = Date.now() + TOP_PAUSE;
+        }
+      }
+
+      frame.style.transform = `translateY(-${offset}px)`;
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+
+    // Reload the embedded workbook periodically.
+    setInterval(() => {
+      frame.src = EXCEL_URL;
+      document.getElementById("status").textContent =
+        "Workbook refreshed: " + new Date().toLocaleTimeString();
+    }, REFRESH_INTERVAL);
+  </script>
 </body>
 </html>

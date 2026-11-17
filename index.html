@@ -5,106 +5,157 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Shop Project Dashboard</title>
+
   <style>
     * { box-sizing: border-box; }
-    body {
+
+    html, body {
       margin: 0;
-      background: #101820;
-      color: white;
-      font-family: Arial, sans-serif;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
+      background: white;
     }
-    header {
-      height: 65px;
-      padding: 17px 28px;
-      background: #182938;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 22px;
-    }
-    #status { font-size: 14px; color: #9ed4ff; }
+
     #viewport {
-      position: relative;
-      height: calc(100vh - 65px);
+      position: fixed;
+      inset: 0;
       overflow: hidden;
+      background: white;
     }
+
     #excel {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
+      width: 2600px;
       height: 2200px;
       border: none;
       background: white;
-      transition: transform 0.08s linear;
+      will-change: transform;
     }
   </style>
 </head>
-<body>
-  <header>
-    <strong>SHOP PROJECT DASHBOARD</strong>
-    <span id="status">Live display</span>
-  </header>
 
+<body>
   <div id="viewport">
-    <iframe id="excel" title="Excel dashboard"></iframe>
+    <iframe
+      id="excel"
+      title="Shop Project Dashboard"
+      allowfullscreen>
+    </iframe>
   </div>
 
   <script>
-    // Replace with the URL from Microsoft's embed code.
-    const EXCEL_URL = "https://infinityarch.sharepoint.com/sites/PMs/_layouts/15/Doc.aspx?sourcedoc={3f791bc9-e80c-4c23-969f-63aa5ef29fc0}&action=embedview&wdAllowInteractivity=False&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=True&wdInConfigurator=True&wdInConfigurator=True";
+    // SharePoint Excel embed URL
+    const EXCEL_URL =
+      "https://infinityarch.sharepoint.com/sites/PMs/_layouts/15/Doc.aspx?sourcedoc={3f791bc9-e80c-4c23-969f-63aa5ef29fc0}&action=embedview&wdAllowInteractivity=False&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=True&wdInConfigurator=True&wdInConfigurator=True";
 
-    // Adjustable display settings
-    const SCROLL_SPEED = 15;       // pixels per second
-    const BOTTOM_PAUSE = 5000;     // milliseconds
+    // DISPLAY SETTINGS
+    const SHEET_WIDTH = 2600;
+    const SHEET_HEIGHT = 2200;
+
+    // SCROLL SETTINGS
+    const VERTICAL_SPEED = 15;
+    const HORIZONTAL_SPEED = 10;
+
     const TOP_PAUSE = 5000;
-    const REFRESH_INTERVAL = 300000; // 5 minutes
+    const BOTTOM_PAUSE = 5000;
+
+    // REFRESH EVERY 60 SECONDS
+    const REFRESH_INTERVAL = 60000;
 
     const frame = document.getElementById("excel");
     const viewport = document.getElementById("viewport");
 
-    frame.src = EXCEL_URL;
+    frame.style.width = SHEET_WIDTH + "px";
+    frame.style.height = SHEET_HEIGHT + "px";
 
-    let offset = 0;
-    let direction = 1;
-    let pauseUntil = Date.now() + TOP_PAUSE;
+    let x = 0;
+    let y = 0;
+
+    let xDirection = 1;
+    let yDirection = 1;
+
+    let xPauseUntil = Date.now() + TOP_PAUSE;
+    let yPauseUntil = Date.now() + TOP_PAUSE;
+
     let previous = performance.now();
 
     function animate(now) {
-      const elapsed = Math.min((now - previous) / 1000, 0.1);
-      previous = now;
-
-      const maxOffset = Math.max(
-        0, frame.offsetHeight - viewport.clientHeight
+      const elapsed = Math.min(
+        (now - previous) / 1000,
+        0.1
       );
 
-      if (Date.now() >= pauseUntil) {
-        offset += direction * SCROLL_SPEED * elapsed;
+      previous = now;
 
-        if (offset >= maxOffset) {
-          offset = maxOffset;
-          direction = -1;
-          pauseUntil = Date.now() + BOTTOM_PAUSE;
-        } else if (offset <= 0) {
-          offset = 0;
-          direction = 1;
-          pauseUntil = Date.now() + TOP_PAUSE;
+      const maxX = Math.max(
+        0,
+        frame.offsetWidth - viewport.clientWidth
+      );
+
+      const maxY = Math.max(
+        0,
+        frame.offsetHeight - viewport.clientHeight
+      );
+
+      // HORIZONTAL SCROLLING
+      if (Date.now() >= xPauseUntil) {
+        x += xDirection * HORIZONTAL_SPEED * elapsed;
+
+        if (x >= maxX) {
+          x = maxX;
+          xDirection = -1;
+          xPauseUntil = Date.now() + BOTTOM_PAUSE;
+        } else if (x <= 0) {
+          x = 0;
+          xDirection = 1;
+          xPauseUntil = Date.now() + TOP_PAUSE;
         }
       }
 
-      frame.style.transform = `translateY(-${offset}px)`;
+      // VERTICAL SCROLLING
+      if (Date.now() >= yPauseUntil) {
+        y += yDirection * VERTICAL_SPEED * elapsed;
+
+        if (y >= maxY) {
+          y = maxY;
+          yDirection = -1;
+          yPauseUntil = Date.now() + BOTTOM_PAUSE;
+        } else if (y <= 0) {
+          y = 0;
+          yDirection = 1;
+          yPauseUntil = Date.now() + TOP_PAUSE;
+        }
+      }
+
+      // MOVE BOTH AXES SIMULTANEOUSLY
+      frame.style.transform =
+        `translate(${-x}px, ${-y}px)`;
+
       requestAnimationFrame(animate);
     }
 
+    function refreshDashboard() {
+      const url = new URL(EXCEL_URL);
+
+      url.searchParams.set(
+        "_refresh",
+        Date.now().toString()
+      );
+
+      frame.src = url.toString();
+    }
+
+    frame.src = EXCEL_URL;
+
     requestAnimationFrame(animate);
 
-    // Reload the embedded workbook periodically.
-    setInterval(() => {
-      frame.src = EXCEL_URL;
-      document.getElementById("status").textContent =
-        "Workbook refreshed: " + new Date().toLocaleTimeString();
-    }, REFRESH_INTERVAL);
+    setInterval(
+      refreshDashboard,
+      REFRESH_INTERVAL
+    );
   </script>
 </body>
 </html>

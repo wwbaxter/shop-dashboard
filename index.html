@@ -3,40 +3,128 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Shop Project Dashboard</title>
 
   <style>
+    * { box-sizing: border-box; }
+
     html, body {
       margin: 0;
-      padding: 0;
       width: 100%;
       height: 100%;
-      overflow-x: hidden;
-      background: #ffffff;
+      overflow: hidden;
+      background: white;
     }
 
-    #dashboard {
-      display: block;
+    #viewport {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background: white;
+    }
+
+    #excel {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
-      height: auto;
-      max-width: 100%;
+      height: 2200px;
+      border: none;
+      background: white;
+      will-change: transform;
     }
   </style>
 </head>
 
 <body>
-
-  <img id="dashboard" src="dashboard.png" alt="Shop Dashboard">
+  <div id="viewport">
+    <iframe
+      id="excel"
+      title="Shop Project Dashboard"
+      allowfullscreen>
+    </iframe>
+  </div>
 
   <script>
-    // Refresh dashboard image every 60 seconds
-    setInterval(() => {
-      const dashboard = document.getElementById("dashboard");
-      dashboard.src = "dashboard.png?t=" + Date.now();
-    }, 60000);
-  </script>
+    // SharePoint Excel embed URL
+    const EXCEL_URL =
+      "https://infinityarch.sharepoint.com/sites/PMs/_layouts/15/Doc.aspx?sourcedoc={3f791bc9-e80c-4c23-969f-63aa5ef29fc0}&action=embedview&wdAllowInteractivity=False&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=True&wdInConfigurator=True&wdInConfigurator=True";
 
+    // DISPLAY SETTINGS
+    const SHEET_HEIGHT = 2200;
+
+    // VERTICAL SCROLL SETTINGS
+    const SCROLL_SPEED = 15;
+    const TOP_PAUSE = 5000;
+    const BOTTOM_PAUSE = 5000;
+
+    // REFRESH EVERY 60 SECONDS
+    const REFRESH_INTERVAL = 60000;
+
+    const frame = document.getElementById("excel");
+    const viewport = document.getElementById("viewport");
+
+    frame.style.height = SHEET_HEIGHT + "px";
+
+    let offset = 0;
+    let direction = 1;
+    let pauseUntil = Date.now() + TOP_PAUSE;
+    let previous = performance.now();
+
+    function animate(now) {
+      const elapsed = Math.min(
+        (now - previous) / 1000,
+        0.1
+      );
+
+      previous = now;
+
+      const maxOffset = Math.max(
+        0,
+        frame.offsetHeight - viewport.clientHeight
+      );
+
+      if (Date.now() >= pauseUntil) {
+        offset += direction * SCROLL_SPEED * elapsed;
+
+        if (offset >= maxOffset) {
+          offset = maxOffset;
+          direction = -1;
+          pauseUntil = Date.now() + BOTTOM_PAUSE;
+        } else if (offset <= 0) {
+          offset = 0;
+          direction = 1;
+          pauseUntil = Date.now() + TOP_PAUSE;
+        }
+      }
+
+      // VERTICAL MOVEMENT ONLY
+      frame.style.transform =
+        `translateY(-${offset}px)`;
+
+      requestAnimationFrame(animate);
+    }
+
+    function refreshDashboard() {
+      const url = new URL(EXCEL_URL);
+
+      url.searchParams.set(
+        "_refresh",
+        Date.now().toString()
+      );
+
+      frame.src = url.toString();
+    }
+
+    frame.src = EXCEL_URL;
+
+    requestAnimationFrame(animate);
+
+    setInterval(
+      refreshDashboard,
+      REFRESH_INTERVAL
+    );
+  </script>
 </body>
 </html>

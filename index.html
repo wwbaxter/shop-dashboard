@@ -3,11 +3,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
   <title>Shop Project Dashboard</title>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     html, body {
       margin: 0;
@@ -17,9 +20,40 @@
       background: white;
     }
 
+    :root {
+      /* Adjust to match the height of rows 1 and 2 */
+      --header-height: 70px;
+    }
+
+    /* FIXED HEADER AREA */
+    #headerViewport {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--header-height);
+      overflow: hidden;
+      z-index: 10;
+      background: white;
+    }
+
+    #headerExcel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2200px;
+      border: none;
+      pointer-events: none;
+    }
+
+    /* SCROLLING PROJECT AREA */
     #viewport {
       position: fixed;
-      inset: 0;
+      top: var(--header-height);
+      left: 0;
+      right: 0;
+      bottom: 0;
       overflow: hidden;
       background: white;
     }
@@ -38,34 +72,55 @@
 </head>
 
 <body>
+
+  <!-- FROZEN ROWS 1 AND 2 -->
+  <div id="headerViewport">
+    <iframe
+      id="headerExcel"
+      title="Frozen Excel Headers">
+    </iframe>
+  </div>
+
+  <!-- SCROLLING WORKBOOK -->
   <div id="viewport">
     <iframe
       id="excel"
-      title="Shop Project Dashboard"
-      allowfullscreen>
+      title="Scrolling Project Dashboard">
     </iframe>
   </div>
 
   <script>
-    // SharePoint Excel embed URL
     const EXCEL_URL =
-      "https://infinityarch.sharepoint.com/sites/PMs/_layouts/15/Doc.aspx?sourcedoc={3f791bc9-e80c-4c23-969f-63aa5ef29fc0}&action=embedview&wdAllowInteractivity=False&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=True&wdInConfigurator=True&wdInConfigurator=True";
+      "https://infinityarch.sharepoint.com/sites/PMs/_layouts/15/Doc.aspx?sourcedoc={3f791bc9-e80c-4c23-969f-63aa5ef29fc0}&action=embedview&wdAllowInteractivity=False&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=True&wdInConfigurator=True";
 
-    // DISPLAY SETTINGS
+    // ADJUSTABLE SETTINGS
     const SHEET_HEIGHT = 2200;
 
-    // VERTICAL SCROLL SETTINGS
+    // Height of rows 1 and 2 combined
+    const HEADER_HEIGHT = 70;
+
     const SCROLL_SPEED = 15;
+
     const TOP_PAUSE = 5000;
     const BOTTOM_PAUSE = 5000;
 
-    // REFRESH EVERY 60 SECONDS
+    // Refresh every 60 seconds
     const REFRESH_INTERVAL = 60000;
 
     const frame = document.getElementById("excel");
-    const viewport = document.getElementById("viewport");
+    const headerFrame =
+      document.getElementById("headerExcel");
+
+    const viewport =
+      document.getElementById("viewport");
+
+    document.documentElement.style.setProperty(
+      "--header-height",
+      HEADER_HEIGHT + "px"
+    );
 
     frame.style.height = SHEET_HEIGHT + "px";
+    headerFrame.style.height = SHEET_HEIGHT + "px";
 
     let offset = 0;
     let direction = 1;
@@ -82,7 +137,9 @@
 
       const maxOffset = Math.max(
         0,
-        frame.offsetHeight - viewport.clientHeight
+        SHEET_HEIGHT -
+        HEADER_HEIGHT -
+        viewport.clientHeight
       );
 
       if (Date.now() >= pauseUntil) {
@@ -99,25 +156,27 @@
         }
       }
 
-      // VERTICAL MOVEMENT ONLY
+      // Start scrolling view below frozen rows.
       frame.style.transform =
-        `translateY(-${offset}px)`;
+        `translateY(-${HEADER_HEIGHT + offset}px)`;
 
       requestAnimationFrame(animate);
     }
 
     function refreshDashboard() {
       const url = new URL(EXCEL_URL);
-
       url.searchParams.set(
         "_refresh",
         Date.now().toString()
       );
 
-      frame.src = url.toString();
+      const refreshedUrl = url.toString();
+
+      headerFrame.src = refreshedUrl;
+      frame.src = refreshedUrl;
     }
 
-    frame.src = EXCEL_URL;
+    refreshDashboard();
 
     requestAnimationFrame(animate);
 

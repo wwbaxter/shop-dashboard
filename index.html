@@ -245,9 +245,6 @@
     const TOP_PAUSE = 5000;
     const BOTTOM_PAUSE = 5000;
 
-    // REFRESH EVERY 60 SECONDS
-    const REFRESH_INTERVAL = 60000;
-
     const frame = document.getElementById("excel");
     const viewport = document.getElementById("viewport");
 
@@ -359,27 +356,11 @@
       requestAnimationFrame(animate);
     }
 
-    // AUTOMATIC WORKBOOK REFRESH
-    function refreshDashboard() {
-      const url = new URL(EXCEL_URL);
+    // LOAD WORKBOOK ONCE
+    frame.src = EXCEL_URL;
 
-      url.searchParams.set(
-        "_refresh",
-        Date.now().toString()
-      );
-
-      frame.src = url.toString();
-    }
-
-    // INITIALIZE DASHBOARD
-    refreshDashboard();
+    // START CONTINUOUS SCROLLING
     requestAnimationFrame(animate);
-
-    // REFRESH EVERY MINUTE
-    setInterval(
-      refreshDashboard,
-      REFRESH_INTERVAL
-    );
 
   </script>
 

@@ -18,36 +18,142 @@
       height: 100%;
       overflow: hidden;
       background: white;
+      font-family: Arial, sans-serif;
     }
 
     :root {
-      /* Adjust to match the height of rows 1 and 2 */
-      --header-height: 70px;
+      --header-height: 76px;
+
+      --job-width: 371px;
+      --rfp-width: 67px;
+      --ship-width: 67px;
+      --pm-width: 67px;
+      --install-width: 67px;
+
+      --separator-width: 9px;
+      --date-width: 24px;
     }
 
-    /* FIXED HEADER AREA */
-    #headerViewport {
+    /* FIXED HEADER */
+    #fixedHeader {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
+      right: 0;
       height: var(--header-height);
+      z-index: 100;
       overflow: hidden;
-      z-index: 10;
       background: white;
     }
 
-    #headerExcel {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 2200px;
-      border: none;
-      pointer-events: none;
+    #headerContent {
+      display: flex;
+      width: max-content;
+      height: var(--header-height);
+      border-left: 1px solid black;
     }
 
-    /* SCROLLING PROJECT AREA */
+    .header-cell {
+      flex-shrink: 0;
+      height: var(--header-height);
+      border-right: 1px solid black;
+      border-bottom: 2px solid black;
+    }
+
+    .top-strip {
+      height: 29px;
+      background: #d9d9d9;
+      border-bottom: 2px solid black;
+    }
+
+    .header-label {
+      height: 47px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      color: black;
+    }
+
+    .job {
+      width: var(--job-width);
+      background: #a9cbea;
+    }
+
+    .rfp {
+      width: var(--rfp-width);
+      background: #ffff00;
+    }
+
+    .ship {
+      width: var(--ship-width);
+      background: #ff2525;
+    }
+
+    .pm {
+      width: var(--pm-width);
+      background: #d9d9d9;
+    }
+
+    .install {
+      width: var(--install-width);
+      background: #d9d9d9;
+    }
+
+    /* BLACK SEPARATOR */
+    .separator {
+      width: var(--separator-width);
+      height: var(--header-height);
+      flex-shrink: 0;
+      background: #000000;
+    }
+
+    /* DATE COLUMNS */
+    .dates {
+      display: flex;
+      height: var(--header-height);
+    }
+
+    .date-cell {
+      flex-shrink: 0;
+      width: var(--date-width);
+      height: var(--header-height);
+      border-right: 1px solid #999;
+      border-bottom: 2px solid black;
+      background: white;
+      color: black;
+    }
+
+    .day-label {
+      height: 29px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      border-bottom: 1px solid black;
+    }
+
+    .date-label {
+      height: 45px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      white-space: nowrap;
+
+      font-size: 12px;
+      font-weight: bold;
+      color: black;
+    }
+
+    /* SCROLLING EXCEL AREA */
     #viewport {
       position: fixed;
       top: var(--header-height);
@@ -73,58 +179,142 @@
 
 <body>
 
-  <!-- FROZEN ROWS 1 AND 2 -->
-  <div id="headerViewport">
-    <iframe
-      id="headerExcel"
-      title="Frozen Excel Headers">
-    </iframe>
+  <!-- FIXED HEADER -->
+  <div id="fixedHeader">
+    <div id="headerContent">
+
+      <div class="header-cell job">
+        <div class="top-strip"></div>
+        <div class="header-label">Job</div>
+      </div>
+
+      <div class="header-cell rfp">
+        <div class="top-strip"></div>
+        <div class="header-label">RFP</div>
+      </div>
+
+      <div class="header-cell ship">
+        <div class="top-strip"></div>
+        <div class="header-label">Ship</div>
+      </div>
+
+      <div class="header-cell pm">
+        <div class="top-strip"></div>
+        <div class="header-label">PM</div>
+      </div>
+
+      <div class="header-cell install">
+        <div class="top-strip"></div>
+        <div class="header-label">Install</div>
+      </div>
+
+      <!-- 9 PIXEL BLACK SEPARATOR -->
+      <div class="separator"></div>
+
+      <!-- GENERATED DATE COLUMNS -->
+      <div class="dates" id="dateHeaders"></div>
+
+    </div>
   </div>
 
   <!-- SCROLLING WORKBOOK -->
   <div id="viewport">
     <iframe
       id="excel"
-      title="Scrolling Project Dashboard">
+      title="Shop Project Dashboard">
     </iframe>
   </div>
 
   <script>
+    // SHAREPOINT WORKBOOK
     const EXCEL_URL =
       "https://infinityarch.sharepoint.com/sites/PMs/_layouts/15/Doc.aspx?sourcedoc={3f791bc9-e80c-4c23-969f-63aa5ef29fc0}&action=embedview&wdAllowInteractivity=False&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=True&wdInConfigurator=True";
 
-    // ADJUSTABLE SETTINGS
+    // DATE HEADER SETTINGS
+    const START_DATE = "2025-12-21";
+    const NUMBER_OF_DAYS = 100;
+
+    // HEIGHT OF ORIGINAL EXCEL HEADER
+    // Adjust this to align Row 3 below the fixed header.
+    const HEADER_CROP = 76;
+
+    // SCROLL SETTINGS
     const SHEET_HEIGHT = 2200;
-
-    // Height of rows 1 and 2 combined
-    const HEADER_HEIGHT = 70;
-
-    const SCROLL_SPEED = 5;
+    const SCROLL_SPEED = 15;
 
     const TOP_PAUSE = 5000;
     const BOTTOM_PAUSE = 5000;
 
-    // Refresh every 60 seconds
-    const REFRESH_INTERVAL = 300000;
+    // REFRESH EVERY 60 SECONDS
+    const REFRESH_INTERVAL = 60000;
 
     const frame = document.getElementById("excel");
-    const headerFrame =
-      document.getElementById("headerExcel");
-
-    const viewport =
-      document.getElementById("viewport");
-
-    document.documentElement.style.setProperty(
-      "--header-height",
-      HEADER_HEIGHT + "px"
-    );
+    const viewport = document.getElementById("viewport");
 
     frame.style.height = SHEET_HEIGHT + "px";
-    headerFrame.style.height = SHEET_HEIGHT + "px";
 
+    // GENERATE DATE COLUMNS
+    function buildDateHeaders() {
+      const container =
+        document.getElementById("dateHeaders");
+
+      container.innerHTML = "";
+
+      const start = new Date(
+        START_DATE + "T12:00:00Z"
+      );
+
+      const dayNames =
+        ["S", "M", "T", "W", "Th", "F", "S"];
+
+      for (let i = 0; i < NUMBER_OF_DAYS; i++) {
+        const date = new Date(start);
+
+        date.setUTCDate(
+          start.getUTCDate() + i
+        );
+
+        const day =
+          dayNames[date.getUTCDay()];
+
+        const dateText =
+          (date.getUTCMonth() + 1) +
+          "/" +
+          date.getUTCDate();
+
+        const cell =
+          document.createElement("div");
+
+        cell.className = "date-cell";
+
+        const dayLabel =
+          document.createElement("div");
+
+        dayLabel.className = "day-label";
+        dayLabel.textContent = day;
+
+        const dateLabel =
+          document.createElement("div");
+
+        dateLabel.className = "date-label";
+        dateLabel.textContent = dateText;
+
+        cell.appendChild(dayLabel);
+        cell.appendChild(dateLabel);
+
+        container.appendChild(cell);
+      }
+    }
+
+    buildDateHeaders();
+
+    // VERTICAL SCROLLING
     let offset = 0;
     let direction = 1;
-    let pauseUntil = Date.now() + TOP_PAUSE;
+
+    let pauseUntil =
+      Date.now() + TOP_PAUSE;
+
     let previous = performance.now();
 
     function animate(now) {
@@ -138,52 +328,60 @@
       const maxOffset = Math.max(
         0,
         SHEET_HEIGHT -
-        HEADER_HEIGHT -
+        HEADER_CROP -
         viewport.clientHeight
       );
 
       if (Date.now() >= pauseUntil) {
-        offset += direction * SCROLL_SPEED * elapsed;
+        offset +=
+          direction * SCROLL_SPEED * elapsed;
 
         if (offset >= maxOffset) {
           offset = maxOffset;
           direction = -1;
-          pauseUntil = Date.now() + BOTTOM_PAUSE;
+
+          pauseUntil =
+            Date.now() + BOTTOM_PAUSE;
+
         } else if (offset <= 0) {
           offset = 0;
           direction = 1;
-          pauseUntil = Date.now() + TOP_PAUSE;
+
+          pauseUntil =
+            Date.now() + TOP_PAUSE;
         }
       }
 
-      // Start scrolling view below frozen rows.
+      // SCROLL DOWN AND UP ONLY
       frame.style.transform =
-        `translateY(-${HEADER_HEIGHT + offset}px)`;
+        `translateY(-${HEADER_CROP + offset}px)`;
 
       requestAnimationFrame(animate);
     }
 
+    // AUTOMATIC WORKBOOK REFRESH
     function refreshDashboard() {
       const url = new URL(EXCEL_URL);
+
       url.searchParams.set(
         "_refresh",
         Date.now().toString()
       );
 
-      const refreshedUrl = url.toString();
-
-      headerFrame.src = refreshedUrl;
-      frame.src = refreshedUrl;
+      frame.src = url.toString();
     }
 
+    // INITIALIZE DASHBOARD
     refreshDashboard();
-
     requestAnimationFrame(animate);
 
+    // REFRESH EVERY MINUTE
     setInterval(
       refreshDashboard,
       REFRESH_INTERVAL
     );
+
   </script>
+
 </body>
 </html>
